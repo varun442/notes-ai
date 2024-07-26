@@ -1,6 +1,6 @@
 import { useState } from "react";
-import NavBar from "../../components/NavBar"
-import PasswordInput from "../../components/PasswordInput";
+import NavBar from "../../components/NavBar/NavBar"
+import PasswordInput from "../../components/Input/PasswordInput";
 import { Link } from "react-router-dom"
 import { validateEmail } from "../../utils/helper";
 

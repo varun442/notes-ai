@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
-import NavBar from "../../components/NavBar"
-import PasswordInput from "../../components/PasswordInput"
+import NavBar from "../../components/NavBar/NavBar"
+import PasswordInput from "../../components/Input/PasswordInput"
 import { useState } from "react"
 import { validateEmail } from "../../utils/helper"
 const Login = () => {
