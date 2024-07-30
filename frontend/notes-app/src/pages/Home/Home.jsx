@@ -1,9 +1,17 @@
+/* eslint-disable no-unused-vars */
 import NavBar from "../../components/NavBar/NavBar"
 import NoteCard from "../../components/Cards/NoteCard"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {MdAdd} from "react-icons/md";
 import AddEditNotes from "./AddEditNotes";
 import Modal from "react-modal"
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
+import moment from "moment";
+import Toast from "../../components/ToastMessage/Toast";
+import EmptyCard from "../../components/Cards/EmptyCard";
+import AddNotesSVG from "../../assets/addnotes.svg"
+import NoDataSVG from "../../assets/nodata.svg"
 const Home = () => {
 
   const [openAddEditModal, setOpenAddEditModal] = useState({
@@ -11,6 +19,124 @@ const Home = () => {
     type: "add",
     data:null,
   });
+
+  const [showToastMsg, setShowToastMsg] = useState({
+    isShown: false,
+    message: "",
+    type: "add"
+  })
+
+  // eslint-disable-next-line no-unused-vars
+  const [allNotes, setAllNotes] = useState([])
+  const [userInfo, setUserInfo] = useState(null)
+  const [isSearch, setIsSearch] = useState(false)
+  const navigate = useNavigate(); 
+  
+  const handleEdit = (noteDetails) => {
+    setOpenAddEditModal({
+      isShown: true,
+      data: noteDetails,
+      type: "edit"
+    })
+  }
+  
+  const showToastMessage = (message, type) => {
+    setShowToastMsg({
+      isShown:true,
+      message,
+      type
+    })
+  }
+  const handleCloseToast = () => {
+    setShowToastMsg({
+      isShown:false,
+      message:"",
+    })
+  }
+  //Get user info
+  const getUserInfo = async() => {
+    try{
+      const response = await axiosInstance.get("/get-user");
+      if(response.data && response.data.user){
+        setUserInfo(response.data.user)
+      }
+    }catch(error){
+      if(error.response.data === 401){
+        localStorage.clear();
+        navigate("/login")
+      }
+    }
+  }
+
+  const getAllNotes = async () => {
+    try{
+      const response = await axiosInstance("/getallnotes")
+      
+      if(response.data && response.data.notes){
+        setAllNotes(response.data.notes)
+      }
+    
+    }catch(error){
+      console.log("An unexpected error occured. Please try again");
+    }
+  }
+
+  const deleteNote = async(data) => {
+    const noteId = data._id;
+        try{
+            const response = await axiosInstance.delete("/deletenote/" + noteId)
+            if(response.data && !response.data.error){
+                showToastMessage("Note Deleted successfully!", 'delete');
+                getAllNotes();
+            }
+        }catch(error){
+            if(error.response && 
+                error.response.data && 
+                error.response.data.message){
+                    console.log("An unexpected error occured. Please try again!")
+                }
+        }
+  }
+
+  const onSearchNote = async(query) => {
+    try{
+      const response = await axiosInstance.get("/search-notes", {
+        params: {query}
+      })
+      if(response.data && response.data.notes){
+        setIsSearch(true)
+        setAllNotes(response.data.notes)
+      }
+    }catch(error){
+        console.log(error);
+    }
+  }
+
+  const updateIsPinned = async(noteData) => {
+    const noteId = noteData._id;
+    try{
+      const response = await axiosInstance.put("/update-pinned/" + noteId, {
+        "isPinned": !noteData.isPinned
+      })
+
+      if(response.data && response.data.note){
+        showToastMessage("Note Pinned successfully!")
+        getAllNotes();
+      }
+    }catch(error){
+      console.log(error);
+    }
+  }
+  const handleClearSearch = () => {
+    setIsSearch(false)
+    getAllNotes();
+  }
+  useEffect(() => {
+    getAllNotes();
+    getUserInfo();
+    return () => {}
+  }, []);
+  
 
   const handleCloseModal = () => {
     setOpenAddEditModal({
@@ -21,20 +147,32 @@ const Home = () => {
   };
   return (
     <>
-    <NavBar/>
+    <NavBar userInfo={userInfo} onSearchNote = {onSearchNote} handleClearSearch={handleClearSearch}/>
     <div className="container mx-auto">
-      <div className="grid grid-cols-3 gap-4">
-      <NoteCard 
-      title="Hello first note"
-      date="3rd Apr 2024"
-      content="Meeting on 7th April"
-      tags="#Meeting"
-      isPinned={true}
-      onEdit={()=>{}}
-      onDelete={()=>{}}
-      onPinNote={()=>{}}
-      />
+
+      {allNotes.length > 0 ? (
+        <div className="grid grid-cols-3 gap-4">
+        {allNotes.map((item, index) => (
+          <NoteCard 
+          key={item._id}
+          title={item.title}
+          date={item.createdOn}
+          content={item.content}
+          tags={item.tags}
+          isPinned={item.isPinned}
+          onEdit={()=> handleEdit(item)}
+          onDelete={()=> deleteNote(item)}
+          onPinNote={()=> updateIsPinned(item)}
+          />    
+        ))}
+      
       </div>
+      ): (
+
+        <EmptyCard imgSrc={isSearch ? NoDataSVG : AddNotesSVG} 
+          message={isSearch ? `Oops! No notes found for your search query` : `Start creating your first note`}/>
+      )}
+      
     </div>
 
     <button className="w-16 h-16 flex items-center justify-center rounded-2xl bg-primary hover:bg-blue-600 absolute right-10 bottom-10" 
@@ -56,10 +194,20 @@ const Home = () => {
     className="w-[40%] max-h-3/4 bg-white rounded-md mx-auto mt-14 p-5 overflow-hidden"
     >
     <AddEditNotes
+    type={openAddEditModal.type}
+    noteData={openAddEditModal.data}    
       onClose = {handleCloseModal}
-    />
+      getAllNotes={getAllNotes}
+      showToastMessage={showToastMessage}
 
+  />
     </Modal>
+    <Toast 
+    isShown={showToastMsg.isShown}
+    message={showToastMsg.message}
+    type={showToastMsg.type}
+    onClose={handleCloseToast}
+    />
     </>
   )
 }
