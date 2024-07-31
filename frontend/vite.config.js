@@ -8,5 +8,8 @@ export default defineConfig({
     postcss: {
       plugins: [tailwindcss()],
     },
+  },
+  build: {
+    outDir: 'dist' // Ensures build output is in the 'dist' directory
   }
 })
