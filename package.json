@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Your project description",
     "scripts": {
-      "build": "cd frontend && npm install && npm run build && cd ../notes-app && npm install"
+      "build": "cd frontend && npm install && npm run build"
     },
     "engines": {
       "node": "20.x"
