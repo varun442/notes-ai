@@ -1,0 +1,11 @@
+{
+    "name": "notes-ai",
+    "version": "1.0.0",
+    "description": "Your project description",
+    "scripts": {
+      "build": "cd frontend && npm install && npm run build && cd ../notes-app && npm install"
+    },
+    "engines": {
+      "node": "14.x"
+    }
+  }
