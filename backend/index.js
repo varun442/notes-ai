@@ -1,9 +1,9 @@
 require("dotenv").config();
+const connectionString = process.env.MONGODB_URI;
 
-const config = require("./config.json");
 const mongoose = require("mongoose")
 
-mongoose.connect(config.connectionString);
+mongoose.connect(connectionString);
 
 const User = require("./models/user.model")
 const Note = require("./models/note.model")
